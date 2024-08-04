@@ -1,42 +1,30 @@
 package org.example;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 class SharedResource{
-    private volatile  boolean flag = false;
+   private AtomicInteger  count = new AtomicInteger();
 
-    public synchronized void setFlag(boolean flag) {
-        this.flag = flag;
-    }
-
-    public synchronized   boolean getFlag(){
-        return flag;
-    }
+   public void increment(){ count.incrementAndGet();}
+    public int getCount(){ return  count.get();}
 }
 
 
 public class Main {
 //   static volatile boolean flag = false;
     public static void main(String[] args) {
-
-        SharedResource sharedResource = new SharedResource();
-        Thread obj = new Thread(()->{
-        System.out.println("Thread 1 is running");
-    });
-    obj.start();
-
+//        SharedResource sharedResource = new SharedResource();
+        SharedRes1 sharedResource =new SharedRes1();
     Runnable runnable = new Runnable() {
         @Override
         public void run() {
-            System.out.println("Thread 2 is running");
-            sharedResource.setFlag(true);
-            System.out.println("Flagged changed");
-            try {
-                Thread.sleep(10999);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+            System.out.println("Thread 1 is running");
+            for(int i = 1; i<=10; i++){
+                System.out.println("running");
+                sharedResource.increment();
             }
-            System.out.println(Thread.currentThread().getName());
-            System.out.println(Thread.currentThread().getState());
-            System.out.println("AFter sleeping");
+            System.out.println("Thread 1 Completed");
+
         }
     };
 
@@ -47,14 +35,22 @@ public class Main {
 
 
     Runnable runnable1 = ()->{
-        while (sharedResource.getFlag() != true){
-
+        for(int i = 1; i<=5; i++){
+            System.out.println("running");
+            sharedResource.increment();
         }
-        System.out.println("Thread 3 detected flag change");
+        System.out.println("Thread 2 Completed");
     };
 
     Thread obj3 = new Thread(runnable1, "thread 3");
     obj3.start();
-        System.out.println("Main Thread Exit");
-    }
+        try {
+            // Wait for both threads to finish
+            obj1.join();
+            obj3.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("Main Thread Exit " + sharedResource.getCount());    }
 }
